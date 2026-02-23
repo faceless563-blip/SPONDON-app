@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Swords, Sun, Moon, MoreVertical, X, Check, Bot, ChevronRight, LayoutDashboard, History, Palette, MousePointerClick } from 'lucide-react';
+import { Swords, Sun, Moon, MoreVertical, X, Check, Bot, ChevronRight, LayoutDashboard, History, Palette, MousePointerClick, Star, Trophy, Sparkles, Rocket, GraduationCap } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const initialSubjects = [
   'Bangla',
@@ -88,7 +89,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [theme, setTheme] = useState<ThemeName>('ocean');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<'Overview' | 'Results History'>('Overview');
+  const [currentView, setCurrentView] = useState<'Overview' | 'Results History' | 'Overall Performance'>('Overview');
   const [selectedClass, setSelectedClass] = useState('Class 6');
 
   useEffect(() => {
@@ -210,190 +211,372 @@ export default function App() {
     setOnboardingStep(0);
   };
 
+  const calculateOverallResults = (cls: string) => {
+    const classMarks = marks[cls];
+    let totalObtained = 0;
+    let totalPossible = 0;
+
+    terms.forEach(term => {
+      const termMarks = classMarks[term];
+      if (termMarks) {
+        Object.values(termMarks).forEach(m => {
+          totalObtained += (m as { obtained: number }).obtained;
+          totalPossible += (m as { total: number }).total;
+        });
+      }
+    });
+
+    if (totalPossible === 0) return { percentage: '0.00', grade: 'N/A' };
+    const percentage = ((totalObtained as number) / (totalPossible as number)) * 100;
+    
+    let grade = '';
+    if (percentage >= 80) grade = 'A+';
+    else if (percentage >= 70) grade = 'A';
+    else if (percentage >= 60) grade = 'A-';
+    else if (percentage >= 50) grade = 'B';
+    else if (percentage >= 40) grade = 'C';
+    else if (percentage >= 33) grade = 'D';
+    else grade = 'F';
+
+    return { percentage: percentage.toFixed(2), grade };
+  };
+
+  const calculateTermAverages = (cls: string) => {
+    return terms.map(term => {
+      const { percentage } = calculateResultsForClass(cls, term);
+      return { term, percentage };
+    });
+  };
+
+  const calculateResultsForClass = (cls: string, term: string) => {
+    const termMarks = marks[cls][term];
+    if (!termMarks) return { percentage: 0, grade: 'N/A' };
+    const totalMarks = Object.values(termMarks).reduce((acc: number, { total }) => acc + (total as number), 0);
+    const obtainedMarks = Object.values(termMarks).reduce((acc: number, { obtained }) => acc + (obtained as number), 0);
+    if (totalMarks === 0) return { percentage: 0, grade: 'N/A' };
+    const percentage = ((obtainedMarks as number) / (totalMarks as number)) * 100;
+    return { percentage: percentage.toFixed(2), grade: '' };
+  };
+
   if (onboardingStep > 0) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500 relative overflow-hidden">
-        {/* Animated Background Elements */}
+        {/* Playful Floating Elements */}
+        <motion.div 
+          animate={{ 
+            y: [0, -20, 0],
+            rotate: [0, 10, 0]
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[15%] left-[10%] text-blue-400/20"
+        >
+          <GraduationCap size={120} />
+        </motion.div>
+        <motion.div 
+          animate={{ 
+            y: [0, 20, 0],
+            rotate: [0, -15, 0]
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[15%] right-[10%] text-purple-400/20"
+        >
+          <Trophy size={140} />
+        </motion.div>
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.3, 0.1]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[40%] right-[15%] text-emerald-400/20"
+        >
+          <Star size={80} />
+        </motion.div>
+
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/20 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/20 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
         
-        <div className="max-w-2xl w-full bg-white/10 dark:bg-slate-900/60 p-8 sm:p-12 rounded-[3rem] border border-white/20 dark:border-white/10 shadow-2xl backdrop-blur-2xl relative z-10 overflow-hidden">
-          
+        <motion.div 
+          layout
+          className="max-w-2xl w-full bg-white/10 dark:bg-slate-900/60 p-8 sm:p-12 rounded-[3rem] border border-white/20 dark:border-white/10 shadow-2xl backdrop-blur-2xl relative z-10 overflow-hidden"
+        >
           {/* Progress Indicator */}
           <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-2">
             {[1, 2, 3, 4].map(step => (
-              <div key={step} className={`h-1.5 rounded-full transition-all duration-500 ${step === onboardingStep ? 'w-8 bg-white' : step < onboardingStep ? 'w-4 bg-white/50' : 'w-4 bg-white/20'}`} />
+              <motion.div 
+                key={step} 
+                animate={{ 
+                  width: step === onboardingStep ? 32 : 16,
+                  backgroundColor: step === onboardingStep ? 'rgba(255, 255, 255, 1)' : step < onboardingStep ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.2)'
+                }}
+                className="h-1.5 rounded-full transition-all duration-500" 
+              />
             ))}
           </div>
 
           <div className="mt-8">
-            {/* Step 1: Welcome & Name */}
-            {onboardingStep === 1 && (
-              <div className="flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-700 slide-in-from-bottom-8">
-                <div className="relative mb-10 group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                  <div className="relative w-28 h-28 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-blue-500/30 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                    <Swords className="w-14 h-14 text-white" />
-                  </div>
-                </div>
-                
-                <h1 className="text-4xl sm:text-6xl font-black text-white mb-4 tracking-tight">
-                  Ready to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Fight?</span>
-                </h1>
-                <p className="text-lg text-slate-300 mb-10 font-medium max-w-md">
-                  Welcome to School Fight. The ultimate dashboard to track your academic progress and conquer your exams.
-                </p>
-                
-                <div className="w-full max-w-sm mb-10">
-                  <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">What should we call you?</label>
-                  <input 
-                    type="text" 
-                    value={userName} 
-                    onChange={e => setUserName(e.target.value)} 
-                    className="w-full bg-white/5 border-2 border-white/10 focus:border-blue-400 rounded-2xl px-6 py-4 text-xl text-center font-bold text-white outline-none transition-all shadow-inner placeholder:text-white/20" 
-                    placeholder="Enter your name"
-                    onKeyDown={(e) => e.key === 'Enter' && setOnboardingStep(2)}
-                  />
-                </div>
-
-                <button
-                  onClick={() => setOnboardingStep(2)}
-                  className="group relative flex items-center gap-3 px-10 py-4 bg-white text-slate-900 rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-white/20 overflow-hidden"
+            <AnimatePresence mode="wait">
+              {/* Step 1: Welcome & Name */}
+              {onboardingStep === 1 && (
+                <motion.div 
+                  key="step1"
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}
+                  className="flex flex-col items-center text-center"
                 >
-                  <span className="relative z-10">Let's Go</span>
-                  <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            )}
-
-            {/* Step 2: Interactive Data Input Demo */}
-            {onboardingStep === 2 && (
-              <div className="flex flex-col items-center text-center animate-in slide-in-from-right-12 fade-in duration-700 w-full">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">How it works</h2>
-                <p className="text-lg text-slate-300 mb-10 font-medium max-w-md">
-                  Tracking your progress is easy. Try entering your marks below to see your grade update instantly!
-                </p>
-                
-                <div className="w-full max-w-lg bg-white/10 p-6 rounded-3xl border border-white/20 mb-10 backdrop-blur-md">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div className="text-left flex-1">
-                      <h3 className="text-xl font-bold text-white">Mathematics</h3>
-                      <p className="text-sm text-slate-400">Total: 100</p>
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className="relative mb-10 group cursor-pointer"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                    <div className="relative w-28 h-28 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-blue-500/30 transition-all duration-500">
+                      <Swords className="w-14 h-14 text-white" />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-left">
-                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Obtained</label>
-                        <input 
-                          type="number" 
-                          value={demoMarks}
-                          onChange={e => setDemoMarks(e.target.value)}
-                          className="w-24 bg-white/10 border border-white/20 focus:border-blue-400 rounded-xl px-4 py-2 text-lg font-bold text-white outline-none transition-all text-center"
-                          placeholder="0"
-                        />
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute -top-2 -right-2 bg-yellow-400 p-2 rounded-full shadow-lg"
+                    >
+                      <Sparkles className="w-5 h-5 text-slate-900" />
+                    </motion.div>
+                  </motion.div>
+                  
+                  <h1 className="text-4xl sm:text-6xl font-black text-white mb-4 tracking-tight">
+                    Hey <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Hero!</span>
+                  </h1>
+                  <p className="text-lg text-slate-300 mb-10 font-medium max-w-md">
+                    Welcome to <span className="text-white font-bold">School Fight</span>. Let's turn those grades into a victory streak! 🚀
+                  </p>
+                  
+                  <div className="w-full max-w-sm mb-10">
+                    <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">What's your warrior name?</label>
+                    <input 
+                      type="text" 
+                      value={userName} 
+                      onChange={e => setUserName(e.target.value)} 
+                      className="w-full bg-white/5 border-2 border-white/10 focus:border-blue-400 rounded-2xl px-6 py-4 text-xl text-center font-bold text-white outline-none transition-all shadow-inner placeholder:text-white/20" 
+                      placeholder="Enter your name"
+                      onKeyDown={(e) => e.key === 'Enter' && setOnboardingStep(2)}
+                    />
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setOnboardingStep(2)}
+                    className="group relative flex items-center gap-3 px-10 py-4 bg-white text-slate-900 rounded-full font-bold text-lg shadow-xl hover:shadow-white/20 overflow-hidden"
+                  >
+                    <span className="relative z-10">Start the Adventure</span>
+                    <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* Step 2: Interactive Data Input Demo */}
+              {onboardingStep === 2 && (
+                <motion.div 
+                  key="step2"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.5, type: "spring", damping: 20 }}
+                  className="flex flex-col items-center text-center w-full"
+                >
+                  <div className="mb-6 bg-blue-500/20 p-4 rounded-3xl">
+                    <Rocket className="w-10 h-10 text-blue-400 animate-bounce" />
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Level Up Your Stats!</h2>
+                  <p className="text-lg text-slate-300 mb-10 font-medium max-w-md">
+                    Inputting marks is like gaining XP. Watch your grade transform as you enter your scores! 🎮
+                  </p>
+                  
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="w-full max-w-lg bg-white/10 p-8 rounded-[2.5rem] border border-white/20 mb-10 backdrop-blur-md shadow-2xl"
+                  >
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                      <div className="text-left flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                          <h3 className="text-xl font-bold text-white">Mathematics</h3>
+                        </div>
+                        <p className="text-sm text-slate-400">Max XP: 100</p>
                       </div>
-                      <div className="text-center">
-                        <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Grade</label>
-                        <span className={`inline-flex items-center justify-center w-14 h-12 rounded-xl font-black text-xl shadow-sm ${
-                          getSubjectGrade(parseInt(demoMarks) || 0, 100) === 'F' 
-                            ? 'bg-red-500/20 text-red-400' 
-                            : 'bg-emerald-500/20 text-emerald-400'
-                        }`}>
-                          {getSubjectGrade(parseInt(demoMarks) || 0, 100)}
-                        </span>
+                      <div className="flex items-center gap-4">
+                        <div className="text-left">
+                          <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Your Score</label>
+                          <input 
+                            type="number" 
+                            value={demoMarks}
+                            onChange={e => setDemoMarks(e.target.value)}
+                            className="w-24 bg-white/10 border border-white/20 focus:border-blue-400 rounded-xl px-4 py-2 text-lg font-bold text-white outline-none transition-all text-center"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Rank</label>
+                          <motion.span 
+                            key={demoMarks}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className={`inline-flex items-center justify-center w-14 h-12 rounded-xl font-black text-xl shadow-sm ${
+                              getSubjectGrade(parseInt(demoMarks) || 0, 100) === 'F' 
+                                ? 'bg-red-500/20 text-red-400' 
+                                : 'bg-emerald-500/20 text-emerald-400'
+                            }`}
+                          >
+                            {getSubjectGrade(parseInt(demoMarks) || 0, 100)}
+                          </motion.span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </motion.div>
 
-                <button
-                  onClick={() => setOnboardingStep(3)}
-                  disabled={!demoMarks || parseInt(demoMarks) === 0}
-                  className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
-                    !demoMarks || parseInt(demoMarks) === 0 
-                      ? 'bg-white/20 text-white/50 cursor-not-allowed' 
-                      : 'bg-white text-slate-900 hover:scale-105 hover:shadow-white/20'
-                  }`}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setOnboardingStep(3)}
+                    disabled={!demoMarks || parseInt(demoMarks) === 0}
+                    className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
+                      !demoMarks || parseInt(demoMarks) === 0 
+                        ? 'bg-white/20 text-white/50 cursor-not-allowed' 
+                        : 'bg-white text-slate-900 hover:shadow-white/20'
+                    }`}
+                  >
+                    <span className="relative z-10">Power Up!</span>
+                    <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* Step 3: Interactive Theme Customization Demo */}
+              {onboardingStep === 3 && (
+                <motion.div 
+                  key="step3"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.5, type: "spring", damping: 20 }}
+                  className="flex flex-col items-center w-full"
                 >
-                  <span className="relative z-10">Got it!</span>
-                  <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            )}
-
-            {/* Step 3: Interactive Theme Customization Demo */}
-            {onboardingStep === 3 && (
-              <div className="flex flex-col items-center animate-in slide-in-from-right-12 fade-in duration-700 w-full">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">Make it yours</h2>
-                <p className="text-lg text-slate-300 mb-10 font-medium max-w-md text-center">
-                  Personalize your dashboard. Pick a theme that matches your vibe!
-                </p>
-
-                <div className="w-full max-w-md bg-white/5 p-8 rounded-3xl border border-white/10 mb-10 backdrop-blur-sm">
-                  <div className="flex flex-wrap items-center justify-center gap-4">
-                    {(Object.keys(themeColors) as ThemeName[]).map(t => (
-                      <div key={t} className="relative group">
-                        <button
-                          onClick={() => {
-                            setTheme(t);
-                            setHasPickedTheme(true);
-                          }}
-                          style={{ 
-                            background: `linear-gradient(135deg, ${themeColors[t]['--theme-primary-500']}, ${themeColors[t]['--theme-secondary-500']})`,
-                            boxShadow: theme === t ? `0 0 20px ${themeColors[t]['--theme-primary-500']}` : 'none'
-                          }}
-                          className={`w-14 h-14 rounded-full ring-2 ring-offset-4 ring-offset-slate-900 transition-all duration-300 ease-out flex items-center justify-center ${theme === t ? 'ring-white scale-110' : 'ring-transparent hover:scale-110 hover:-translate-y-1'}`}
-                          aria-label={`Select ${t} theme`}
-                        >
-                          {theme === t && <Check className="w-6 h-6 text-white animate-in zoom-in duration-300" />}
-                        </button>
-                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-slate-900 text-xs font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 capitalize">
-                          {t}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="mb-6 bg-purple-500/20 p-4 rounded-3xl">
+                    <Palette className="w-10 h-10 text-purple-400" />
                   </div>
-                </div>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Choose Your Aura</h2>
+                  <p className="text-lg text-slate-300 mb-10 font-medium max-w-md text-center">
+                    Every warrior needs a style. Pick a theme that represents your energy! ✨
+                  </p>
 
-                <button
-                  onClick={() => setOnboardingStep(4)}
-                  disabled={!hasPickedTheme}
-                  className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
-                    !hasPickedTheme
-                      ? 'bg-white/20 text-white/50 cursor-not-allowed' 
-                      : 'bg-white text-slate-900 hover:scale-105 hover:shadow-white/20'
-                  }`}
+                  <div className="w-full max-w-md bg-white/5 p-8 rounded-[2.5rem] border border-white/10 mb-10 backdrop-blur-sm shadow-inner">
+                    <div className="flex flex-wrap items-center justify-center gap-5">
+                      {(Object.keys(themeColors) as ThemeName[]).map(t => (
+                        <div key={t} className="relative group">
+                          <motion.button
+                            whileHover={{ scale: 1.2, rotate: 5 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                              setTheme(t);
+                              setHasPickedTheme(true);
+                            }}
+                            style={{ 
+                              background: `linear-gradient(135deg, ${themeColors[t]['--theme-primary-500']}, ${themeColors[t]['--theme-secondary-500']})`,
+                              boxShadow: theme === t ? `0 0 25px ${themeColors[t]['--theme-primary-500']}` : 'none'
+                            }}
+                            className={`w-16 h-16 rounded-2xl ring-2 ring-offset-4 ring-offset-slate-900 transition-all duration-300 ease-out flex items-center justify-center ${theme === t ? 'ring-white scale-110' : 'ring-transparent'}`}
+                            aria-label={`Select ${t} theme`}
+                          >
+                            {theme === t && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                              >
+                                <Check className="w-8 h-8 text-white" />
+                              </motion.div>
+                            )}
+                          </motion.button>
+                          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-slate-900 text-xs font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 capitalize shadow-lg">
+                            {t}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setOnboardingStep(4)}
+                    disabled={!hasPickedTheme}
+                    className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
+                      !hasPickedTheme
+                        ? 'bg-white/20 text-white/50 cursor-not-allowed' 
+                        : 'bg-white text-slate-900 hover:shadow-white/20'
+                    }`}
+                  >
+                    <span className="relative z-10">Looking Sharp!</span>
+                    <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* Step 4: Final Step */}
+              {onboardingStep === 4 && (
+                <motion.div 
+                  key="step4"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.2 }}
+                  transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
+                  className="flex flex-col items-center w-full"
                 >
-                  <span className="relative z-10">Looks Great</span>
-                  <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            )}
-
-            {/* Step 4: Final Step */}
-            {onboardingStep === 4 && (
-              <div className="flex flex-col items-center animate-in slide-in-from-right-12 fade-in duration-700 w-full">
-                <div className="relative mb-10">
-                  <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-[3rem] flex items-center justify-center shadow-2xl shadow-emerald-500/40 animate-bounce">
-                    <Bot className="w-16 h-16 text-white" />
+                  <div className="relative mb-12">
+                    <motion.div 
+                      animate={{ 
+                        y: [0, -15, 0],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                      className="w-36 h-36 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-[3rem] flex items-center justify-center shadow-2xl shadow-emerald-500/40"
+                    >
+                      <Bot className="w-20 h-20 text-white" />
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="absolute -top-6 -right-16 bg-white px-6 py-4 rounded-3xl rounded-bl-none shadow-2xl border border-slate-100"
+                    >
+                      <p className="font-black text-slate-900 text-base">You're a legend, {userName}! 🏆</p>
+                    </motion.div>
                   </div>
-                  <div className="absolute -top-4 -right-12 bg-white px-5 py-3 rounded-2xl rounded-bl-none shadow-xl animate-in zoom-in delay-300 duration-500">
-                    <p className="font-bold text-slate-900 text-sm">You're all set, {userName}!</p>
-                  </div>
-                </div>
 
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-10 text-center">Ready to track your success?</h2>
+                  <h2 className="text-3xl sm:text-5xl font-black text-white mb-10 text-center leading-tight">
+                    The Arena Awaits.<br/>
+                    <span className="text-emerald-400">Let's Conquer!</span>
+                  </h2>
 
-                <button
-                  onClick={completeOnboarding}
-                  className="group relative flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-full font-bold text-xl hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-emerald-500/30 overflow-hidden"
-                >
-                  <span className="relative z-10">Enter School Fight</span>
-                  <Swords className="relative z-10 w-6 h-6 group-hover:rotate-12 transition-transform" />
-                </button>
-              </div>
-            )}
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={completeOnboarding}
+                    className="group relative flex items-center gap-4 px-14 py-6 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-full font-black text-2xl shadow-2xl shadow-emerald-500/40 overflow-hidden"
+                  >
+                    <span className="relative z-10">Enter the Fight</span>
+                    <Swords className="relative z-10 w-8 h-8 group-hover:rotate-12 transition-transform" />
+                    <motion.div 
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                    />
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -615,6 +798,87 @@ export default function App() {
               })}
             </div>
           </div>
+          ) : currentView === 'Overall Performance' ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-center gap-4 mb-8">
+                <button 
+                  onClick={() => setCurrentView('Results History')}
+                  className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all shadow-sm"
+                >
+                  <ChevronRight className="w-6 h-6 rotate-180" />
+                </button>
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                  <span className="w-2 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/50"></span>
+                  {selectedClass} Overall Performance
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Summary Card */}
+                <div className="lg:col-span-1 space-y-6">
+                  <div className="bg-gradient-to-br from-primary-500 to-secondary-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-primary-500/30 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                    <h3 className="text-xl font-bold mb-8 opacity-80">Yearly Aggregate</h3>
+                    <div className="space-y-8">
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-widest opacity-70 mb-2">Average Percentage</p>
+                        <p className="text-6xl font-black">{calculateOverallResults(selectedClass).percentage}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-widest opacity-70 mb-2">Final Grade</p>
+                        <p className="text-6xl font-black">{calculateOverallResults(selectedClass).grade}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/80 dark:bg-slate-900/60 p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 shadow-xl backdrop-blur-xl">
+                    <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+                      <Bot className="w-6 h-6 text-primary-500" />
+                      Yearly Insight
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                      "Based on your performance across all terms, you have maintained a {calculateOverallResults(selectedClass).grade} grade. Consistency is key to academic success. Focus on the subjects where you scored lower in the final term to ensure a strong start for the next year."
+                    </p>
+                  </div>
+                </div>
+
+                {/* Term Breakdown */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-white/80 dark:bg-slate-900/60 p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 shadow-xl backdrop-blur-xl">
+                    <h3 className="text-xl font-bold mb-8 text-slate-800 dark:text-white">Term-wise Progress</h3>
+                    <div className="space-y-6">
+                      {calculateTermAverages(selectedClass).map((item, idx) => (
+                        <div key={item.term} className="space-y-3">
+                          <div className="flex justify-between items-end">
+                            <span className="font-bold text-slate-700 dark:text-slate-200">{item.term}</span>
+                            <span className="text-2xl font-black text-primary-500">{item.percentage}%</span>
+                          </div>
+                          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-1000 ease-out"
+                              style={{ width: `${item.percentage}%`, transitionDelay: `${idx * 200}ms` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-3xl border border-emerald-100 dark:border-emerald-900/30">
+                      <h4 className="font-bold text-emerald-700 dark:text-emerald-400 mb-2 uppercase text-xs tracking-widest">Best Term</h4>
+                      <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300">
+                        {calculateTermAverages(selectedClass).reduce((prev, current) => (parseFloat(prev.percentage.toString()) > parseFloat(current.percentage.toString())) ? prev : current).term}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-3xl border border-blue-100 dark:border-blue-900/30">
+                      <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2 uppercase text-xs tracking-widest">Consistency Score</h4>
+                      <p className="text-2xl font-black text-blue-800 dark:text-blue-300">High</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="space-y-8">
               <h2 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
@@ -623,12 +887,8 @@ export default function App() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'].map((cls) => (
-                  <button
+                  <div
                     key={cls}
-                    onClick={() => {
-                      setSelectedClass(cls);
-                      setCurrentView('Overview');
-                    }}
                     className="relative overflow-hidden bg-white/80 dark:bg-slate-900/60 p-8 rounded-[2rem] border border-slate-200/50 dark:border-white/5 shadow-lg hover:shadow-xl hover:shadow-primary-500/20 hover:-translate-y-2 hover:border-primary-300/50 dark:hover:border-primary-700/50 transition-all duration-300 backdrop-blur-xl flex flex-col items-center justify-center group text-center"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-secondary-500/0 group-hover:from-primary-500/5 group-hover:to-secondary-500/10 transition-colors duration-500"></div>
@@ -636,11 +896,28 @@ export default function App() {
                       <Swords className="w-10 h-10 text-primary-500" />
                     </div>
                     <h3 className="text-2xl font-bold text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-300">{cls}</h3>
-                    <p className="text-slate-500 dark:text-slate-400 mt-3 font-medium flex items-center gap-2">
-                      View past results
-                      <span className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">→</span>
-                    </p>
-                  </button>
+                    
+                    <div className="mt-6 flex flex-col gap-3 w-full relative z-10">
+                      <button
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setCurrentView('Overview');
+                        }}
+                        className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-primary-500 hover:text-white dark:hover:bg-primary-600 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        Term Wise <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setCurrentView('Overall Performance');
+                        }}
+                        className="w-full py-3 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 border border-primary-100 dark:border-primary-900/30"
+                      >
+                        Overall Performance <LayoutDashboard className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
