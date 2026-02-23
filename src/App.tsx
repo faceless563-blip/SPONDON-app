@@ -78,6 +78,7 @@ export default function App() {
   const [onboardingStep, setOnboardingStep] = useState(() => {
     return localStorage.getItem('schoolFightOnboardingDone') ? 0 : 1;
   });
+  const [tourStep, setTourStep] = useState(0);
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem('schoolFightUserName') || 'Spondon';
   });
@@ -209,6 +210,8 @@ export default function App() {
     localStorage.setItem('schoolFightUserName', userName || 'Student');
     if (!userName) setUserName('Student');
     setOnboardingStep(0);
+    setTourStep(1); // Start the guided tour
+    setIsMenuOpen(false);
   };
 
   const calculateOverallResults = (cls: string) => {
@@ -258,7 +261,7 @@ export default function App() {
     return { percentage: percentage.toFixed(2), grade: '' };
   };
 
-  if (onboardingStep > 0) {
+  if (onboardingStep > 0 && onboardingStep < 3) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500 relative overflow-hidden">
         {/* Playful Floating Elements */}
@@ -374,87 +377,10 @@ export default function App() {
                 </motion.div>
               )}
 
-              {/* Step 2: Interactive Data Input Demo */}
+              {/* Step 3: Interactive Theme Customization Demo */}
               {onboardingStep === 2 && (
                 <motion.div 
                   key="step2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.5, type: "spring", damping: 20 }}
-                  className="flex flex-col items-center text-center w-full"
-                >
-                  <div className="mb-6 bg-blue-500/20 p-4 rounded-3xl">
-                    <Rocket className="w-10 h-10 text-blue-400 animate-bounce" />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Level Up Your Stats!</h2>
-                  <p className="text-lg text-slate-300 mb-10 font-medium max-w-md">
-                    Inputting marks is like gaining XP. Watch your grade transform as you enter your scores! 🎮
-                  </p>
-                  
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    className="w-full max-w-lg bg-white/10 p-8 rounded-[2.5rem] border border-white/20 mb-10 backdrop-blur-md shadow-2xl"
-                  >
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                      <div className="text-left flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                          <h3 className="text-xl font-bold text-white">Mathematics</h3>
-                        </div>
-                        <p className="text-sm text-slate-400">Max XP: 100</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-left">
-                          <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Your Score</label>
-                          <input 
-                            type="number" 
-                            value={demoMarks}
-                            onChange={e => setDemoMarks(e.target.value)}
-                            className="w-24 bg-white/10 border border-white/20 focus:border-blue-400 rounded-xl px-4 py-2 text-lg font-bold text-white outline-none transition-all text-center"
-                            placeholder="0"
-                          />
-                        </div>
-                        <div className="text-center">
-                          <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Rank</label>
-                          <motion.span 
-                            key={demoMarks}
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className={`inline-flex items-center justify-center w-14 h-12 rounded-xl font-black text-xl shadow-sm ${
-                              getSubjectGrade(parseInt(demoMarks) || 0, 100) === 'F' 
-                                ? 'bg-red-500/20 text-red-400' 
-                                : 'bg-emerald-500/20 text-emerald-400'
-                            }`}
-                          >
-                            {getSubjectGrade(parseInt(demoMarks) || 0, 100)}
-                          </motion.span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setOnboardingStep(3)}
-                    disabled={!demoMarks || parseInt(demoMarks) === 0}
-                    className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
-                      !demoMarks || parseInt(demoMarks) === 0 
-                        ? 'bg-white/20 text-white/50 cursor-not-allowed' 
-                        : 'bg-white text-slate-900 hover:shadow-white/20'
-                    }`}
-                  >
-                    <span className="relative z-10">Power Up!</span>
-                    <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </motion.button>
-                </motion.div>
-              )}
-
-              {/* Step 3: Interactive Theme Customization Demo */}
-              {onboardingStep === 3 && (
-                <motion.div 
-                  key="step3"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
@@ -508,7 +434,7 @@ export default function App() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setOnboardingStep(4)}
+                    onClick={completeOnboarding}
                     disabled={!hasPickedTheme}
                     className={`group relative flex items-center gap-3 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-xl overflow-hidden ${
                       !hasPickedTheme
@@ -518,59 +444,6 @@ export default function App() {
                   >
                     <span className="relative z-10">Looking Sharp!</span>
                     <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </motion.button>
-                </motion.div>
-              )}
-
-              {/* Step 4: Final Step */}
-              {onboardingStep === 4 && (
-                <motion.div 
-                  key="step4"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.2 }}
-                  transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
-                  className="flex flex-col items-center w-full"
-                >
-                  <div className="relative mb-12">
-                    <motion.div 
-                      animate={{ 
-                        y: [0, -15, 0],
-                        rotate: [0, 5, -5, 0]
-                      }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                      className="w-36 h-36 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-[3rem] flex items-center justify-center shadow-2xl shadow-emerald-500/40"
-                    >
-                      <Bot className="w-20 h-20 text-white" />
-                    </motion.div>
-                    <motion.div 
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="absolute -top-6 -right-16 bg-white px-6 py-4 rounded-3xl rounded-bl-none shadow-2xl border border-slate-100"
-                    >
-                      <p className="font-black text-slate-900 text-base">You're a legend, {userName}! 🏆</p>
-                    </motion.div>
-                  </div>
-
-                  <h2 className="text-3xl sm:text-5xl font-black text-white mb-10 text-center leading-tight">
-                    The Arena Awaits.<br/>
-                    <span className="text-emerald-400">Let's Conquer!</span>
-                  </h2>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1, rotate: 2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={completeOnboarding}
-                    className="group relative flex items-center gap-4 px-14 py-6 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-full font-black text-2xl shadow-2xl shadow-emerald-500/40 overflow-hidden"
-                  >
-                    <span className="relative z-10">Enter the Fight</span>
-                    <Swords className="relative z-10 w-8 h-8 group-hover:rotate-12 transition-transform" />
-                    <motion.div 
-                      animate={{ x: ['-100%', '200%'] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                    />
                   </motion.button>
                 </motion.div>
               )}
@@ -610,6 +483,7 @@ export default function App() {
         </div>
         <div className="p-4 flex-1 overflow-y-auto space-y-2">
           <button 
+            id="menu-overview-btn"
             onClick={() => { setSelectedClass('Class 6'); setCurrentView('Overview'); setIsMenuOpen(false); }} 
             className={`w-full text-left px-4 py-4 rounded-2xl transition-all flex items-center gap-3 ${currentView === 'Overview' && selectedClass === 'Class 6' ? 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 text-primary-600 dark:text-primary-400 font-bold shadow-sm border border-primary-100 dark:border-primary-900/30' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-medium border border-transparent'}`}
           >
@@ -617,6 +491,7 @@ export default function App() {
             Class 6 Overview
           </button>
           <button 
+            id="menu-history-btn"
             onClick={() => { setCurrentView('Results History'); setIsMenuOpen(false); }} 
             className={`w-full text-left px-4 py-4 rounded-2xl transition-all flex items-center gap-3 ${currentView === 'Results History' ? 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 text-primary-600 dark:text-primary-400 font-bold shadow-sm border border-primary-100 dark:border-primary-900/30' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-medium border border-transparent'}`}
           >
@@ -639,6 +514,7 @@ export default function App() {
               </div>
             </div>
             <button
+              id="menu-button"
               onClick={() => setIsMenuOpen(true)}
               className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors w-fit px-2 py-1 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50"
               aria-label="Open menu"
@@ -648,7 +524,7 @@ export default function App() {
             </button>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-3 bg-white dark:bg-slate-800/80 p-3 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
+          <div id="theme-picker" className="flex flex-wrap items-center justify-center gap-3 bg-white dark:bg-slate-800/80 p-3 rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
             <div className="flex flex-wrap items-center justify-center gap-2 px-2">
               {(Object.keys(themeColors) as ThemeName[]).map(t => (
                 <div key={t} className="relative group">
@@ -684,10 +560,19 @@ export default function App() {
         <main className="animate-in fade-in slide-in-from-bottom-4 duration-700">
           {currentView === 'Overview' ? (
             <div className="bg-white/80 dark:bg-slate-900/60 p-6 sm:p-8 rounded-[2rem] border border-slate-200/50 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none backdrop-blur-xl">
-              <h2 className="text-2xl font-bold mb-8 text-slate-800 dark:text-white flex items-center gap-3">
-                <span className="w-2 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/50"></span>
-                {selectedClass} Overview
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                  <span className="w-2 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/50"></span>
+                  {selectedClass} Overview
+                </h2>
+                <button
+                  onClick={() => setCurrentView('Overall Performance')}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary-500/20 hover:scale-105 hover:shadow-primary-500/40 transition-all duration-300"
+                >
+                  <Trophy size={18} />
+                  View Overall Performance
+                </button>
+              </div>
               <div className="space-y-4">
               {terms.map((term) => {
                 const { percentage, grade } = calculateResults(term);
@@ -726,6 +611,7 @@ export default function App() {
                               <div>
                                 <label className="md:hidden text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Obtained Marks</label>
                                 <input
+                                  id={subject === 'Bangla' ? 'marks-input-demo' : undefined}
                                   type="number"
                                   value={marks[selectedClass][term][subject]?.obtained || 0}
                                   onChange={(e) => handleMarksChange(term, subject, 'obtained', e.target.value)}
@@ -802,7 +688,13 @@ export default function App() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="flex items-center gap-4 mb-8">
                 <button 
-                  onClick={() => setCurrentView('Results History')}
+                  onClick={() => {
+                    if (selectedClass === 'Class 6') {
+                      setCurrentView('Overview');
+                    } else {
+                      setCurrentView('Results History');
+                    }
+                  }}
                   className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all shadow-sm"
                 >
                   <ChevronRight className="w-6 h-6 rotate-180" />
@@ -924,6 +816,171 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Robot Guide Overlay */}
+      <AnimatePresence>
+        {tourStep > 0 && (
+          <RobotGuide 
+            step={tourStep} 
+            userName={userName}
+            onNext={() => {
+              if (tourStep === 3) {
+                setTourStep(0);
+              } else {
+                setTourStep(prev => prev + 1);
+              }
+            }}
+            onComplete={() => setTourStep(0)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function RobotGuide({ step, userName, onNext, onComplete }: { step: number; userName: string; onNext: () => void; onComplete: () => void }) {
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [message, setMessage] = useState('');
+  const [isExploding, setIsExploding] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (step === 1) {
+      setIsExploding(true);
+      setTimeout(() => setIsExploding(false), 2000);
+    }
+  }, [step]);
+
+  const handleFinish = () => {
+    setShowConfetti(true);
+    setTimeout(() => {
+      onComplete();
+    }, 1500);
+  };
+
+  useEffect(() => {
+    const getTargetPos = () => {
+      let targetId = '';
+      if (step === 1) {
+        targetId = 'theme-picker';
+        setMessage(`Boom! 💥 You're in, ${userName}! First things first: you can switch your Aura (theme) right here anytime!`);
+      } else if (step === 2) {
+        targetId = 'menu-button';
+        setMessage("This is your Command Center! 🎮 Click here to jump between your Class Overview and Results History.");
+      } else if (step === 3) {
+        targetId = 'marks-input-demo';
+        setMessage("And here's the magic! ✨ Enter your marks, and I'll instantly calculate your grades and give you a tactical performance analysis!");
+      }
+      
+      const el = document.getElementById(targetId);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setPosition({
+          top: rect.top + rect.height / 2,
+          left: rect.left + rect.width / 2
+        });
+      }
+    };
+
+    getTargetPos();
+    window.addEventListener('resize', getTargetPos);
+    return () => window.removeEventListener('resize', getTargetPos);
+  }, [step, userName]);
+
+  return (
+    <div className="fixed inset-0 z-[100] pointer-events-none">
+      <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px]" />
+      
+      <motion.div 
+        animate={{ 
+          top: position.top,
+          left: position.left,
+        }}
+        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto"
+      >
+        {isExploding && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [1, 2], opacity: [1, 0] }}
+            className="absolute inset-0 bg-yellow-400/30 rounded-full blur-2xl"
+          />
+        )}
+        {/* Speech Bubble */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          key={message}
+          className="mb-8 bg-white dark:bg-slate-800 p-6 rounded-[2rem] rounded-bl-none shadow-2xl border border-slate-200 dark:border-slate-700 max-w-xs relative"
+        >
+          <p className="text-slate-800 dark:text-slate-100 font-bold leading-relaxed">
+            {message}
+          </p>
+          <div className="mt-4 flex justify-between items-center gap-4">
+            <button 
+              onClick={onComplete}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-xs font-bold transition-colors"
+            >
+              Skip
+            </button>
+            <button 
+              onClick={step === 3 ? handleFinish : onNext}
+              className="px-4 py-2 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors flex items-center gap-2 shadow-lg shadow-primary-500/30"
+            >
+              {step === 3 ? "Let's Fight!" : "Next"} <ChevronRight size={16} />
+            </button>
+          </div>
+          {/* Bubble Tail */}
+          <div className="absolute -bottom-4 left-0 w-8 h-8 bg-white dark:bg-slate-800 border-l border-b border-slate-200 dark:border-slate-700 rotate-45 -translate-y-1/2" />
+        </motion.div>
+
+        {/* Robot Mascot */}
+        <motion.div 
+          animate={{ 
+            y: [0, -10, 0],
+            rotate: [0, 5, -5, 0],
+            scale: showConfetti ? [1, 1.5, 0] : 1
+          }}
+          transition={{ duration: 3, repeat: showConfetti ? 0 : Infinity }}
+          className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-500/40 border-4 border-white dark:border-slate-800"
+        >
+          <Bot className="w-12 h-12 text-white" />
+        </motion.div>
+
+        {showConfetti && (
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ x: 0, y: 0, opacity: 1 }}
+                animate={{ 
+                  x: (Math.random() - 0.5) * 400,
+                  y: (Math.random() - 0.5) * 400,
+                  opacity: 0,
+                  rotate: Math.random() * 360
+                }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                style={{
+                  backgroundColor: ['#fbbf24', '#34d399', '#60a5fa', '#f472b6'][i % 4]
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </motion.div>
+
+      {/* Pulse Effect on Target */}
+      <motion.div 
+        animate={{ 
+          top: position.top,
+          left: position.left,
+          scale: [1, 1.5, 1],
+          opacity: [0.5, 0, 0.5]
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+        className="absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-primary-500 rounded-full"
+      />
     </div>
   );
 }
