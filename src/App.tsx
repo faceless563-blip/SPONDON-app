@@ -9,12 +9,18 @@ const initialSubjects = [
   'Bangladesh and Global Studies',
 ];
 
+const getSubjectsForClass = (cls: string) => {
+  if (cls === 'Class 6') return initialSubjects;
+  return initialSubjects.filter(s => s !== 'Bangladesh and Global Studies');
+};
+
 const terms = ['First Term Exam', 'Second Term Exam', 'Third Term Exam'];
 const allClasses = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6'];
 
-const buildInitialMarks = (subjects: string[]) => {
+const buildInitialMarks = () => {
   const state: Record<string, Record<string, Record<string, { total: number; obtained: number }>>> = {};
   allClasses.forEach(cls => {
+    const subjects = getSubjectsForClass(cls);
     state[cls] = terms.reduce((acc, term) => ({
       ...acc,
       [term]: subjects.reduce((subAcc, subject) => ({
@@ -27,6 +33,14 @@ const buildInitialMarks = (subjects: string[]) => {
 };
 
 const buildInitialRanks = () => {
+  const state: Record<string, Record<string, string>> = {};
+  allClasses.forEach(cls => {
+    state[cls] = terms.reduce((acc, term) => ({ ...acc, [term]: '' }), {});
+  });
+  return state;
+};
+
+const buildInitialFeedbacks = () => {
   const state: Record<string, Record<string, string>> = {};
   allClasses.forEach(cls => {
     state[cls] = terms.reduce((acc, term) => ({ ...acc, [term]: '' }), {});
@@ -68,8 +82,7 @@ export default function App() {
   });
   const [demoMarks, setDemoMarks] = useState('');
   const [hasPickedTheme, setHasPickedTheme] = useState(false);
-  const [subjects] = useState(initialSubjects);
-  const [marks, setMarks] = useState(buildInitialMarks(subjects));
+  const [marks, setMarks] = useState(buildInitialMarks());
   const [ranks, setRanks] = useState(buildInitialRanks());
   const [activeTerm, setActiveTerm] = useState<string | null>(terms[0]);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -91,7 +104,7 @@ export default function App() {
     // Apply Theme Colors directly to the root element so Tailwind picks them up globally
     const colors = themeColors[theme];
     Object.entries(colors).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
+      root.style.setProperty(key, value as string);
     });
   }, [isDarkMode, theme]);
 
@@ -121,13 +134,52 @@ export default function App() {
     }));
   };
 
+  const getAIFeedback = (term: string) => {
+    const termMarks = marks[selectedClass][term];
+    if (!termMarks) return "No data available for analysis.";
+    
+    const subjects = Object.entries(termMarks);
+    const totalObtained = subjects.reduce((acc, [_, m]) => acc + (m as { obtained: number }).obtained, 0);
+    const totalPossible = subjects.reduce((acc, [_, m]) => acc + (m as { total: number }).total, 0);
+    
+    if (totalPossible === 0 || totalObtained === 0) return "Please input your marks to receive an AI analysis of your performance.";
+
+    const percentage = (totalObtained / totalPossible) * 100;
+    const weakSubjects = subjects.filter(([_, m]) => ((m as { obtained: number }).obtained / (m as { total: number }).total) < 0.5).map(([s]) => s);
+    const strongSubjects = subjects.filter(([_, m]) => ((m as { obtained: number }).obtained / (m as { total: number }).total) >= 0.8).map(([s]) => s);
+
+    let feedback = "";
+
+    if (percentage >= 80) {
+      feedback = `Excellent performance, ${userName}! Your overall score of ${percentage.toFixed(1)}% shows great dedication. `;
+    } else if (percentage >= 60) {
+      feedback = `Good job, ${userName}. You have a solid foundation with ${percentage.toFixed(1)}%, but there's room to reach the top tier. `;
+    } else if (percentage >= 40) {
+      feedback = `You've passed, but we need to step up the game. ${percentage.toFixed(1)}% means we need more focused study sessions. `;
+    } else {
+      feedback = `Critical attention needed. ${percentage.toFixed(1)}% is below the expected threshold. Let's rebuild your study plan. `;
+    }
+
+    if (strongSubjects.length > 0) {
+      feedback += `You are excelling in ${strongSubjects.join(', ')}. Keep up the momentum here! `;
+    }
+
+    if (weakSubjects.length > 0) {
+      feedback += `However, you need significant improvement in ${weakSubjects.join(', ')}. Focus on understanding the core concepts of these subjects first. `;
+    } else if (percentage < 90) {
+      feedback += `Try to aim for higher precision in all subjects to push your grade to A+.`;
+    }
+
+    return feedback;
+  };
+
   const calculateResults = (term: string) => {
     const termMarks = marks[selectedClass][term];
     if (!termMarks) return { percentage: 0, grade: 'N/A' };
-    const totalMarks = Object.values(termMarks).reduce((acc, { total }) => acc + total, 0);
-    const obtainedMarks = Object.values(termMarks).reduce((acc, { obtained }) => acc + obtained, 0);
+    const totalMarks = Object.values(termMarks).reduce((acc: number, { total }) => acc + total, 0);
+    const obtainedMarks = Object.values(termMarks).reduce((acc: number, { obtained }) => acc + obtained, 0);
     if (totalMarks === 0) return { percentage: 0, grade: 'N/A' };
-    const percentage = (obtainedMarks / totalMarks) * 100;
+    const percentage = ((obtainedMarks as number) / (totalMarks as number)) * 100;
     let grade = '';
     if (percentage >= 80) grade = 'A+';
     else if (percentage >= 70) grade = 'A';
@@ -476,7 +528,7 @@ export default function App() {
                           <div className="font-bold text-slate-400 dark:text-slate-500 text-xs uppercase tracking-widest text-center">Grade</div>
                         </div>
                         <div className="space-y-3">
-                          {subjects.map((subject) => (
+                          {getSubjectsForClass(selectedClass).map((subject) => (
                             <div key={subject} className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-3 md:gap-y-4 items-center p-4 rounded-2xl bg-white/50 dark:bg-slate-950/50 border border-slate-100/50 dark:border-white/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/10 hover:border-primary-200/50 dark:hover:border-primary-900/50 transition-all duration-300 backdrop-blur-sm">
                               <div className="md:col-span-1 text-slate-800 dark:text-slate-200 font-semibold text-lg">{subject}</div>
                               <div>
@@ -539,6 +591,20 @@ export default function App() {
                                 <p className="text-primary-600/80 dark:text-primary-400/80 text-xs font-bold uppercase tracking-widest mb-2">Grade</p>
                                 <p className="text-5xl font-black text-primary-600 dark:text-primary-400 drop-shadow-sm">{grade}</p>
                               </div>
+                            </div>
+                          </div>
+                          <div className="bg-white/80 dark:bg-slate-950/50 p-8 rounded-3xl border border-slate-200/50 dark:border-white/5 shadow-sm hover:shadow-xl hover:shadow-primary-500/5 transition-all duration-300 md:col-span-2 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                              <Bot className="w-12 h-12 text-secondary-500" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+                              <span className="w-1.5 h-6 rounded-full bg-secondary-500 shadow-sm shadow-secondary-500/50"></span>
+                              AI Performance Analysis
+                            </h3>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/50 dark:border-white/5 min-h-[120px] flex items-center">
+                              <p className="text-slate-700 dark:text-slate-300 text-lg font-medium leading-relaxed italic">
+                                "{getAIFeedback(term)}"
+                              </p>
                             </div>
                           </div>
                         </div>
