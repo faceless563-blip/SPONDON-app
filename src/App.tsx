@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Swords, Sun, Moon, MoreVertical, X, Check, Bot, ChevronRight, LayoutDashboard, History, Palette, MousePointerClick } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 const initialSubjects = [
   'Bangla',
@@ -581,6 +582,7 @@ export default function App() {
           )}
         </main>
       </div>
+      <Analytics />
     </div>
   );
 }
